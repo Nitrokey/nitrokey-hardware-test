@@ -1,0 +1,24 @@
+# Set to "." for unused paths
+# TODO: mark unused with a sentinel value instead of using "."" hack
+
+device = "nk3"
+variant = "lpc55"
+provisioner_firmware = "../artifacts/provisioner-lpc55.bin"
+application_firmware = "../artifacts/firmware-lpc55.bin"
+mbr = "."
+bootloader = "."
+bootloader_key = "."
+fido_key_path= "../utils/test-certificates/fido/nk-fido-ca-key.trussed"
+fido_certificate_path= "../utils/test-certificates/fido/nk-fido-ee-cert.der"
+
+device_id = ""
+firmware_version = ""
+usb_manager_enabled = true
+output = "artifacts/"
+ykush_port_device = 1
+ykush_port_debug_adapter = 2
+ykush_serial_number = "Y3N11081"
+
+test_fido2 = true
+test_secrets = true
+test_opcard = true

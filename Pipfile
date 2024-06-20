@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fire = ">=0.5.0"
+pyocd = ">=0.34"
+pexpect = "*"
+pynitrokey = {editable = true, ref = "6f5c2c098bb0ee4d9136d5db8539227f3e791a94", git = "https://github.com/Nitrokey/pynitrokey.git"}
+oscrypto = {ref = "1547f535001ba568b239b8797465536759c742a3", git = "https://github.com/wbond/oscrypto.git"}
+
+[dev-packages]
+mypy = ">=1.5.1"
+reuse = ">1,<2"
+ruff = "*"
+black = "*"
+isort = "*"
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.3"

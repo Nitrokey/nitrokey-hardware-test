@@ -1,0 +1,36 @@
+# TODO: things to extract to make the image smaller:
+# - Python env build in another stage, to avoid pulling build tools; have the pipenv verification in the first stage only
+# - JLink RPM archive removal
+# Note: podman/stable is based on fedora/latest
+FROM quay.io/fedora/fedora:40
+
+RUN dnf install -y libusb python3-pip git make fuse-overlayfs
+RUN pip install pipenv uv
+
+RUN dnf install -y curl
+# TODO: move this to NK cloud?
+# https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.rpm
+RUN curl 'https://www.segger.com/downloads/jlink/JLink_Linux_V792b_x86_64.rpm' -X POST -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Origin: https://www.segger.com' -H 'Connection: keep-alive' -H 'Referer: https://www.segger.com/downloads/jlink/JLink_Linux_V792b_x86_64.rpm' -H 'Cookie: PHPSESSID=juq1ja170a6ec7b0s8ilj9j3uk; fe_typo_user=94519259cbb933f1565a0326ba1cadc2' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: same-origin' -H 'Sec-Fetch-User: ?1' --data-raw 'accept_license_agreement=accepted&submit=Download+software' -O
+RUN dnf install -y JLink_Linux_V792b_x86_64.rpm
+RUN dnf install -y which make git libusb podman
+ENV ALLOW_ROOT=1
+
+# build: use separate image; requires packages: g++ libusb1-devel
+RUN dnf install -y g++ libusb1-devel
+
+# required for setting up pyscard, a dependency of pynitrokey
+RUN dnf install -y swig pcsc-lite-devel python3-devel
+RUN pip install pyscard
+
+# install nrfjprog
+RUN dnf install -y unzip tar
+RUN curl -L https://www.nordicsemi.com/-/media/Software-and-other-downloads/Desktop-software/nRF-command-line-tools/sw/Versions-10-x-x/10-15-0/nrf-command-line-tools-10.15.0_amd.zip -o nrf-command-line-tools-10.15.0_amd.zip && \
+	unzip nrf-command-line-tools-10.15.0_amd.zip && \
+  tar xvzf nrf-command-line-tools-10.15.0_Linux-amd64.tar.gz --no-same-owner && \
+  mv nrf-command-line-tools /opt/nrf5x-command-line-tools && \
+  ln -s /opt/nrf5x-command-line-tools/bin/nrfjprog /usr/bin && \
+  ln -s /opt/nrf5x-command-line-tools/bin/mergehex /usr/bin
+
+# install nrfutil
+RUN curl -L https://github.com/NordicSemiconductor/pc-nrfutil/releases/download/v6.1.2/nrfutil-linux -o /usr/bin/nrfutil && \
+	chmod +x /usr/bin/nrfutil

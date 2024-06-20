@@ -1,0 +1,19 @@
+[Unit]
+Description=Podman nk3-test container service
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=/run/user/1000/containers
+
+[Container]
+Image=glab-runner-fedora:dumb-init
+Volume=gitlab-runner-config:/etc/gitlab-runner
+Volume=/dev:/dev:rw
+ContainerName=nk3-tests
+RunInit=true
+User=root
+Group=dialout
+# SYS_ADMIN and MKNOD needed in order to run containers inside containers
+AddCapability=SYS_ADMIN MKNOD
+
+[Install]
+WantedBy=default.target

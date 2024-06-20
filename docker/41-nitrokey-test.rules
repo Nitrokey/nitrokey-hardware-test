@@ -1,0 +1,28 @@
+# Here rules in new style should be provided. Matching devices should be tagged with 'uaccess'.
+# File prefix number should be lower than 73, to be correctly processed by the Udev.
+# Recommended udev version: >= 188.
+#
+
+# Note: the old style MODE="0666" is added here to make the access possible for the not GUI-logged users.
+# FIXME to improve, e.g. by adding a proper group owner, like with GROUP="dialout" attribute, and switch mode to "0660"
+
+ACTION!="add|change", GOTO="u2f_end"
+
+# Nitrokey 3A Mini/3A NFC/3C NFC
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42b2", TAG+="uaccess", MODE="0666"
+# Nitrokey 3A NFC Bootloader/3C NFC Bootloader
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42dd", TAG+="uaccess", MODE="0666"
+# Nitrokey 3A Mini Bootloader
+ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42e8", TAG+="uaccess", MODE="0666"
+# Nitrokey 3A NFC Bootloader/3C NFC Bootloader
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0021", TAG+="uaccess", MODE="0666"
+
+LABEL="u2f_end"
+
+# STM32 debug adapter -  STM32 STLink
+ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3748", TAG+="uaccess", MODE="0666"
+# JLINK Segger
+ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0101", TAG+="uaccess", MODE="0666"
+
+# YKUSH
+ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f11b", TAG+="uaccess", MODE="0666"

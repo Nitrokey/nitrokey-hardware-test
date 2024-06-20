@@ -1,0 +1,21 @@
+device = "nkpk"
+variant = "nkpk"
+provisioner_firmware = "../artifacts/provisioner-nkpk.hex"
+application_firmware = "../artifacts/firmware-nkpk.hex"
+mbr = "./config/nkpk/mbr.hex"
+bootloader = "./config/nkpk/bootloader.hex"
+bootloader_key = "../utils/test-certificates/firmware-nkpk/dfu_private.key"
+fido_key_path= "../utils/test-certificates/fido/nk-fido-ca-key.trussed"
+fido_certificate_path= "../utils/test-certificates/fido/nk-fido-ee-cert.der"
+
+device_id = ""
+firmware_version = ""
+usb_manager_enabled = true
+output = "artifacts/"
+ykush_port_device = 1
+ykush_port_debug_adapter = 2
+ykush_serial_number = "Y3N11607"
+
+test_fido2 = true
+test_secrets = false
+test_opcard = false

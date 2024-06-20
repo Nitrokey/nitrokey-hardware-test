@@ -1,0 +1,6 @@
+[submodule "tests/nitrokey-3-tests"]
+	path = tests/nitrokey-3-tests
+	url = https://github.com/Nitrokey/nitrokey-3-tests.git
+[submodule "tests/pynitrokey"]
+	path = tests/pynitrokey
+	url = https://github.com/Nitrokey/pynitrokey.git
