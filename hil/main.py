@@ -17,6 +17,7 @@ from hil.test_loop import TestLoop
 from hil.test_suites.nk3_tests import Nitrokey3TestSuite
 from hil.test_suites.pynitrokey_tests import pynitrokeyTestSuite
 from hil.test_suites.secrets_tests import SecretsTestSuite
+from hil.test_suites.secrets_full_tests import SecretsFullTestSuite
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +108,9 @@ def main(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
         "secrets": SecretsTestSuite(
+            CheckRunner(), artifacts_destination_path, test_configuration
+        ),
+        "secrets-full": SecretsFullTestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
     }
