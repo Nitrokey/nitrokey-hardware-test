@@ -43,6 +43,8 @@ stages:          # List of stages for jobs, and their order of execution
   - deploy
 
 build-job:       # This job runs in the build stage, which runs first.
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
   tags:
     - docker
   variables:
