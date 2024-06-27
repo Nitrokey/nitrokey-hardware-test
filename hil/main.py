@@ -110,7 +110,7 @@ def main(
         "secrets": SecretsTestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
-        "secrets-full": SecretsFullTestSuite(
+        "secrets_full": SecretsFullTestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
     }
