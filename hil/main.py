@@ -16,8 +16,8 @@ from hil.test_configuration import ExistingFilePath, TestConfiguration
 from hil.test_loop import TestLoop
 from hil.test_suites.nk3_tests import Nitrokey3TestSuite
 from hil.test_suites.pynitrokey_tests import pynitrokeyTestSuite
-from hil.test_suites.secrets_tests import SecretsTestSuite
 from hil.test_suites.secrets_full_tests import SecretsFullTestSuite
+from hil.test_suites.secrets_tests import SecretsTestSuite
 
 log = logging.getLogger(__name__)
 
