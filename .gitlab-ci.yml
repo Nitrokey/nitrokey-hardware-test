@@ -16,12 +16,28 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
+include:
+  - project: 'nitrokey/gitlab-ci'
+    file:
+      - 'common-jobs/common_jobs.yml'
+
 variables:
+  GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_SUBMODULE_DEPTH: 1
+  SCRIPTS_REPO: git@git.nitrokey.com:nitrokey/gitlab-ci.git
+  REPO_GROUP: nitrokey
+  REPO_NAME: nitrokey-hardware-test
+  MAIN_BRANCH: main
+  COMMON_UPLOAD_NIGHTLY: "false"
+  COMMON_GITHUB_RELEASE: "false"
+  COMMON_UPLOAD_FILES: "false"
+  COMMON_UPDATE_DOCKER: "false"
+  COMMON_UPLOAD_OEM_FILES: "false"
 
 
 stages:          # List of stages for jobs, and their order of execution
+  - pull-github
   - build
   - test
   - deploy
@@ -34,6 +50,8 @@ build-job:       # This job runs in the build stage, which runs first.
     - apt update && apt install -qy make
     - make ci-setup-ubuntu
     - make check
+  before_script: []
+  after_script: []
 
 #hw-test-job:   # This job runs in the test stage.
 #  tags:
