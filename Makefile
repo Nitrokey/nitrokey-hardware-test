@@ -13,7 +13,7 @@ init:
 check:
 	$(PIPENV) run black --check --diff $(FILES)
 	$(PIPENV) run isort --check --diff $(FILES)
-	$(PIPENV) run ruff $(FILES)
+	$(PIPENV) run ruff check $(FILES)
 	$(PIPENV) run mypy --strict $(FILES)
 	# Configuration check. TOML lib needs Python 3.12. Ignoring errors for now.
 	-$(PIPENV) run python -m hil.configuration
