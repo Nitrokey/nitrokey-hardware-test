@@ -28,7 +28,8 @@ COPY runner-entrypoint /
 RUN chmod +x /runner-entrypoint
 
 RUN dnf install -y libusb python3-pip git python3.12
-RUN pip install pipenv
+# TODO: remove pipenv ones all projects use hil >= v1.3.2
+RUN pip install pipenv uv
 
 # TODO: move this to NK cloud?
 # https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.rpm

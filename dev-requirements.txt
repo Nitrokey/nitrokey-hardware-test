@@ -1,0 +1,11 @@
+fire>=0.5.0
+pyocd>=0.34
+pexpect
+pynitrokey @ git+https://github.com/Nitrokey/pynitrokey.git@6f5c2c098bb0ee4d9136d5db8539227f3e791a94
+oscrypto @ git+https://github.com/wbond/oscrypto.git@1547f535001ba568b239b8797465536759c742a3
+mypy>=1.5.1
+reuse>1,<2
+ruff
+black
+isort
+

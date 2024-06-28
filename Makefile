@@ -1,44 +1,46 @@
 PYTHON ?= 3.12
-PIPENV := pipenv --python "$(PYTHON)"
 
-FILES=$(shell find -name "*.py" | grep -v tests/)
+FILES=$(shell find -name "*.py" | grep -v tests/ | grep -v .venv/)
 
 TESTS ?= pynitrokey
 
 .PHONY: init
 init:
-	$(PIPENV) install --dev
+	uv venv --python "$(PYTHON)"
+	uv pip install -r dev-requirements.txt
 
 .PHONY: check ci glab-runner setup-fedora-host-user setup-fedora-host clean-setup-fedora-host
 check:
-	$(PIPENV) run black --check --diff $(FILES)
-	$(PIPENV) run isort --check --diff $(FILES)
-	$(PIPENV) run ruff check $(FILES)
-	$(PIPENV) run mypy --strict $(FILES)
+	uv tool run black --check --diff $(FILES)
+	uv tool run isort --check --diff $(FILES)
+	uv tool run ruff check $(FILES)
+	. .venv/bin/activate; python -m mypy --strict $(FILES)
 	# Configuration check. TOML lib needs Python 3.12. Ignoring errors for now.
-	-$(PIPENV) run python -m hil.configuration
+	- . .venv/bin/activate; python -m hil.configuration
 
 .PHONY: fix
 fix:
-	$(PIPENV) run black $(FILES)
-	$(PIPENV) run isort $(FILES)
-	$(PIPENV) run ruff --fix $(FILES)
+	uv tool run black $(FILES)
+	uv tool run isort $(FILES)
+	uv tool run ruff --fix $(FILES)
 
 FW=bin/lpc55-v1.5.0
 MODEL=lpc55
 SETUP_LOG=artifacts/setup.log
 ci:
 	mkdir -p artifacts
-	-$(PIPENV) --rm
-	$(PIPENV) install 2>&1 > $(SETUP_LOG)
-	tail $(SETUP_LOG)
-	$(PIPENV) run python main.py --verbose true --config_file config/$(MODEL)/config.toml --tests $(TESTS)
+	uv venv --python "$(PYTHON)"
+	uv pip install -r requirements.txt
+	# TODO: once uv implements its run / exec command, use that
+	. .venv/bin/activate; python main.py --verbose true --config_file config/$(MODEL)/config.toml --tests $(TESTS)
 
 .PHONY: ci-setup-ubuntu
 ci-setup-ubuntu:
 	apt update
-	apt install -qy git make python3.12 python3-pip pipenv
-	$(PIPENV) install --dev
+	apt install -qy git make python3.12 python3-pip
+	pip install uv --break-system-packages
+	uv venv --python "$(PYTHON)"
+	uv pip install -r dev-requirements.txt
 
 _local:
 	-git clone --recursive https://github.com/Nitrokey/nitrokey-3-firmware.git nitrokey-3-firmware
