@@ -14,10 +14,10 @@ from hil.provisioner.provision import ProvisionConfiguration
 from hil.runner import CheckRunner
 from hil.test_configuration import ExistingFilePath, TestConfiguration
 from hil.test_loop import TestLoop
+from hil.test_suites.full_tests import FullTestSuite
 from hil.test_suites.nk3_tests import Nitrokey3TestSuite
 from hil.test_suites.pynitrokey_tests import pynitrokeyTestSuite
-from hil.test_suites.secrets_full_tests import SecretsFullTestSuite
-from hil.test_suites.secrets_tests import SecretsTestSuite
+from hil.test_suites.slow_tests import SlowTestSuite
 
 log = logging.getLogger(__name__)
 
@@ -107,10 +107,10 @@ def main(
         "nk3test": Nitrokey3TestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
-        "secrets": SecretsTestSuite(
+        "full": FullTestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
-        "secrets_full": SecretsFullTestSuite(
+        "slow": SlowTestSuite(
             CheckRunner(), artifacts_destination_path, test_configuration
         ),
     }
