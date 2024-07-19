@@ -25,20 +25,15 @@ Please follow [Hardware Setup](/doc/hardware.md) for further setup.
 - `pip install pynitrokey`
 
 Local hil runs on either docker or podman. If podman is to be used, make sure sufficient permissions are granted. Otherwise docker has proven to work more reliably on some systems.
-
-To build the used image with podman:
-- `make build_local`
-
-To build the used image with docker:
-- `make build_local_docker`
+Podman is selected by default, if you want to use docker, set it via the `DOCKER` variable like so:
+- `make build_local DOCKER=docker`
 
 ## Usage
 - Since the local hil is not executed from CI, the firmware and provisioner files need to be provided manually in a directory called `artifacts`.
 - Before running make sure only the one Security Key to be tested is connected. The following script also ensures this.
 - Also make sure the key and the developer board are both connected to the local machine.
+- As with building, docker can be set by setting the `DOCKER` variable.
+- Tests can be selected via the `TESTS` variable. Possible test suites are `pynitrokey`, `nk3test`, `full` and `slow` (`slow` contains `full` and `full` contains `nk3test`).
 
-To run local hil with podman:
-- `make run_local`
-
-To run local hil with docker:
-- `make run_local_docker`
+Example of running local hil with variables:
+- `make run_local DOCKER=docker TESTS=pynitrokey,full`
