@@ -50,15 +50,28 @@ _local:
 	cp -r nitrokey-3-firmware/utils ..
 	make ci LOCAL=true
 
+run_local: MODEL=AUTO
 ifeq (${DOCKER}, podman)
 SEC_OPTS = --security-opt seccomp=unconfined
 endif
 run_local: build_local
-	nitropy nk3 list | grep -v :: | wc -l | awk '$$1 != "1" {print "ERR:\tYou have " $$1 " nk3 devices connected\nINFO:\tConnect exactly 1 nk3 device and retry"; exit 2}'
+	if [ "$(MODEL)" = "AUTO" ]; then \
+		echo INFO: Automatically checking what nk3 model is connected:; \
+		nitropy nk3 list | grep -v :: | wc -l | awk '$$1 != "1" {print "ERR:\tYou have " $$1 " nk3 devices connected\nINFO:\tConnect exactly 1 nk3 device and retry"; exit 2}' && \
+		(nitropy nk3 status | grep NRF52 && make _exec_local MODEL=nrf52 || true; \
+		nitropy nk3 status | grep LPC55 && make _exec_local MODEL=lpc55 || true;) \
+	else \
+		echo INFO: Manually chosen model $(MODEL); \
+		echo "Press enter to continue..."; \
+		read ans; \
+		make _exec_local; \
+	fi
+
+_exec_local:
+	echo INFO: executing local test with model $(MODEL) and tests $(TESTS)
 	$(DOCKER) run -d $(SEC_OPTS) --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest
 	$(DOCKER) cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
-	nitropy nk3 status | grep NRF52 && $(DOCKER) exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=nrf52 TESTS=$(TESTS) PYTHON=$(PYTHON) || true
-	nitropy nk3 status | grep LPC55 && $(DOCKER) exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=lpc55 TESTS=$(TESTS) PYTHON=$(PYTHON) || true
+	$(DOCKER) exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=$(MODEL) TESTS=$(TESTS) PYTHON=$(PYTHON) || true
 	$(DOCKER) stop nk3-local-hw-test
 
 build_local:
