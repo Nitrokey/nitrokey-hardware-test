@@ -23,10 +23,10 @@ class Runner(ABC):
         cmd: str,
         timeout: Optional[int] = None,
         save_output_to: Optional[str] = None,
-    ) -> None: ...
+    ) -> str: ...
 
     @abstractmethod
-    def call_with_timeout(self, cmd: str, timeout: int) -> None: ...
+    def call_with_timeout(self, cmd: str, timeout: int) -> str: ...
 
 
 class CheckRunner(Runner):
@@ -35,7 +35,7 @@ class CheckRunner(Runner):
         cmd: str,
         save_output_to: Optional[str] = None,
         timeout: Optional[int] = None,
-    ) -> None:
+    ) -> str:
         if timeout is None:
             timeout = DEFAULT_SUBPROCESS_TIMEOUT
         cmd = cmd.strip()
@@ -82,13 +82,15 @@ class CheckRunner(Runner):
             if err_str in res:
                 raise RunnerCommandFailedException(f"Error in execution: {res!r}")
 
+        return res.decode("ascii")
+
     def __call__(
         self,
         cmd: str,
         timeout: Optional[int] = None,
         save_output_to: Optional[str] = None,
-    ) -> None:
-        self.runner(cmd, save_output_to, timeout)
+    ) -> str:
+        return self.runner(cmd, save_output_to, timeout)
 
-    def call_with_timeout(self, cmd: str, timeout: int) -> None:
+    def call_with_timeout(self, cmd: str, timeout: int) -> str:
         return self.runner(cmd, timeout=timeout)
