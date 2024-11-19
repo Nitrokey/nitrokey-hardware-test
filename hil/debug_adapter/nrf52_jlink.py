@@ -1,7 +1,11 @@
+import logging
+from time import sleep
 from typing import Optional
 
 from hil.debug_adapter.debug_adapter import DebugAdapter
 from hil.test_configuration import ExistingFilePath
+
+log = logging.getLogger(__name__)
 
 
 class JLink(DebugAdapter):
@@ -12,23 +16,43 @@ class JLink(DebugAdapter):
         self.runner("nrfjprog -f NRF52 --reset")
         return True
 
+    # currently unused
+    def is_device_ready(self) -> bool:
+        cnt = 0
+        while True:
+            out = self.runner("nrfjprog -f NRF52 --deviceversion")
+            if "NRF52840" in out:
+                return True
+
+            log.debug("device not settled, waiting 5 secs and retrying")
+            sleep(5)
+            cnt += 1
+            if cnt > 10:
+                log.debug("device does not settle, tried 10 times to no avail")
+                return False
+
+        return True
+
     def erase_and_flash_bootloader(
         self, mbr: ExistingFilePath, bootloader: ExistingFilePath
     ) -> None:
+
         self.runner("nrfjprog -f NRF52 --recover")
         self.runner("nrfjprog -f NRF52 --eraseall")
         self.runner(
-            f"nrfjprog -f NRF52 --program {mbr.path_str} --sectorerase --verify"
+            f"nrfjprog -c 125 -f NRF52 --program {mbr.path_str} --sectorerase --verify"
         )
         self.runner(
-            f"nrfjprog -f NRF52 --program {bootloader.path_str} --sectorerase --verify"
+            f"nrfjprog -c 125 -f NRF52 --program {bootloader.path_str} --sectorerase --verify"
         )
-
         # UICR:REGOUT0 to 3v3
-        self.runner("nrfjprog -f NRF52 --memwr 0x10001304 --val 0xfffffffd --verify")
+        self.runner(
+            "nrfjprog -c 125 -f NRF52 --memwr 0x10001304 --val 0xfffffffd --verify"
+        )
         # UICR:NFCPINS to disabled
-        self.runner("nrfjprog -f NRF52 --memwr 0x1000120C --val 0xfffffffe --verify")
-
+        self.runner(
+            "nrfjprog -c 125 -f NRF52 --memwr 0x1000120C --val 0xfffffffe --verify"
+        )
         # don't set APPROTECT
 
     def erase(self) -> None:
