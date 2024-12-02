@@ -4,6 +4,8 @@ FILES=$(shell find -name "*.py" | grep -v tests/ | grep -v .venv/)
 
 TESTS ?= pynitrokey
 
+DOCKER ?= podman
+
 .PHONY: init
 init:
 	uv venv --python "$(PYTHON)"
@@ -27,12 +29,13 @@ fix:
 FW=bin/lpc55-v1.5.0
 MODEL=lpc55
 SETUP_LOG=artifacts/setup.log
+LOCAL ?= false
 ci:
 	mkdir -p artifacts
 	uv venv --python "$(PYTHON)"
 	uv pip install -r requirements.txt
 	# TODO: once uv implements its run / exec command, use that
-	. .venv/bin/activate; python main.py --verbose true --config_file config/$(MODEL)/config.toml --tests $(TESTS)
+	. .venv/bin/activate; python main.py --verbose true --config_file config/$(MODEL)/config.toml --tests $(TESTS) --local $(LOCAL)
 
 .PHONY: ci-setup-ubuntu
 ci-setup-ubuntu:
@@ -45,52 +48,34 @@ ci-setup-ubuntu:
 _local:
 	-git clone --recursive https://github.com/Nitrokey/nitrokey-3-firmware.git nitrokey-3-firmware
 	cp -r nitrokey-3-firmware/utils ..
-	mkdir -p artifacts
-	uv venv --python "$(PYTHON)"
-	uv pip install -r requirements.txt
-	# TODO: once uv implements its run / exec command, use that
-	. .venv/bin/activate; python main.py --verbose true --config_file config/$(MODEL)/config.toml --tests $(TESTS) --local true
+	make ci LOCAL=true
 
-run_local:
-	nitropy nk3 list | grep -v :: | wc -l | awk '$$1 != "1" {print "ERR:\tYou have " $$1 " nk3 devices connected\nINFO:\tConnect exactly 1 nk3 device and retry"; exit 2}'
-	nitropy nk3 status | grep NRF52 && make _run_local_nrf52 || true
-	nitropy nk3 status | grep LPC55 && make _run_local_lpc55 || true
+run_local: MODEL=AUTO
+ifeq (${DOCKER}, podman)
+SEC_OPTS = --security-opt seccomp=unconfined
+endif
+run_local: build_local
+	if [ "$(MODEL)" = "AUTO" ]; then \
+		echo INFO: Automatically checking what nk3 model is connected:; \
+		nitropy nk3 list | grep -v :: | wc -l | awk '$$1 != "1" {print "ERR:\tYou have " $$1 " nk3 devices connected\nINFO:\tConnect exactly 1 nk3 device and retry"; exit 2}' && \
+		(nitropy nk3 status | grep NRF52 && make _exec_local MODEL=nrf52 || true; \
+		nitropy nk3 status | grep LPC55 && make _exec_local MODEL=lpc55 || true;) \
+	else \
+		echo INFO: Manually chosen model $(MODEL); \
+		echo "Press enter to continue..."; \
+		read ans; \
+		make _exec_local; \
+	fi
 
-run_local_docker:
-	nitropy nk3 list | grep -v :: | wc -l | awk '$$1 != "1" {print "ERR:\tYou have " $$1 " nk3 devices connected\nINFO:\tConnect exactly 1 nk3 device and retry"; exit 2}'
-	nitropy nk3 status | grep NRF52 && make _run_local_nrf52_docker || true
-	nitropy nk3 status | grep LPC55 && make _run_local_lpc55_docker || true
-
-_run_local_nrf52:
-	podman run -d --security-opt seccomp=unconfined --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest
-	podman cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
-	-podman exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=nrf52 TESTS=pynitrokey,nk3test
-	podman stop nk3-local-hw-test
-
-_run_local_nrf52_docker:
-	docker run -d --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest 
-	docker cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
-	-docker exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=nrf52 TESTS=pynitrokey,nk3test
-	docker stop nk3-local-hw-test
-
-_run_local_lpc55:
-	podman run -d --security-opt seccomp=unconfined --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest
-	podman cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
-	-podman exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=lpc55 TESTS=pynitrokey,nk3test
-	podman stop nk3-local-hw-test
-
-_run_local_lpc55_docker:
-	docker run -d --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest
-	docker cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
-	-docker exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=lpc55 TESTS=pynitrokey,nk3test
-	docker stop nk3-local-hw-test
-
+_exec_local:
+	echo INFO: executing local test with model $(MODEL) and tests $(TESTS)
+	$(DOCKER) run -d $(SEC_OPTS) --privileged -it --rm --name nk3-local-hw-test -v /dev:/dev:rw -v ./artifacts:/home/nk3test/artifacts local-hardware-test:latest
+	$(DOCKER) cp . nk3-local-hw-test:/home/nk3test/nitrokey-hardware-test
+	$(DOCKER) exec nk3-local-hw-test make -C /home/nk3test/nitrokey-hardware-test _local FW=../artifacts MODEL=$(MODEL) TESTS=$(TESTS) PYTHON=$(PYTHON) || true
+	$(DOCKER) stop nk3-local-hw-test
 
 build_local:
-	podman build --security-opt seccomp=unconfined . --pull -t local-hardware-test:latest -f docker/Dockerfile-local
-
-build_local_docker:
-	docker build . --pull -t local-hardware-test:latest -f docker/Dockerfile-local 
+	$(DOCKER) build $(SEC_OPTS) . --pull -t local-hardware-test:latest -f docker/Dockerfile-local
 
 glab-runner:
 	# This runs the Gitlab runner locally for nitrokey-hardware-test CI. Needs to be registered first before accepting jobs. See Readme.md for the details.
